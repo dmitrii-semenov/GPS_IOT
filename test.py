@@ -1,10 +1,7 @@
 import machine
+import uselect, sys
 import time
 import BG77
-import ujson
-
-
-default_sleep_time = 10
 
 _REMOTE_SERVER_IP_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_ = 1883
@@ -18,6 +15,20 @@ coordinates = [
     (49.202283, 16.619560),
     (49.204638, 16.571667),
 ]
+
+spoll=uselect.poll()
+spoll.register(sys.stdin,uselect.POLLIN)
+
+def read1():
+    return(sys.stdin.read(1) if spoll.poll(0) else None)
+
+def readline():
+    c = read1()
+    buffer = ""
+    while c != None:
+        buffer += c
+        c = read1()
+    return buffer
 
 # Initialize UART for BG77 module
 bg_uart = machine.UART(0, baudrate=115200, tx=machine.Pin(0), rxbuf=256, rx=machine.Pin(1), timeout=0, timeout_char=1)
@@ -45,28 +56,15 @@ time.sleep(1)
 
 # MQTT connection to ThingsBoard
 module.sendCommand(f"AT+QMTCONN=1,\"{_CLIENT_ID_}\",\"{_ACCESS_TOKEN_}\",\"{_PASSWORD_}\"\r\n")
-time.sleep(1)
+time.sleep(5)
 
-# Check network registration status using AT+CREG?
-creg_response = module.sendCommand("AT+CREG?\r\n")
-time.sleep(1)
-print("Network Registration Status (CREG):", creg_response)
-
-# Check extended network registration status using AT+CEREG?
+# Check network registration status using AT+CEREG?
 cereg_response = module.sendCommand("AT+CEREG?\r\n")
 time.sleep(1)
-print("Extended Network Registration Status (CEREG):", cereg_response)
+print("Network Registration Status (CEREG):", cereg_response)
 
-def switch_callaback(topic,msg): # Callback function for the switch
-    js = ujson.loads(msg) # Parse the JSON message
-    if js['data'] == True:
-        default_sleep_time = 5 # Change the sleep time to 5 seconds
-    elif js['data'] == False:
-        default_sleep_time = 10         
-    
-# mount the callback function to the module
-module.setCallback(switch_callaback)
-
+module.sendCommand("AT+QMTSUB=1,1,\"v1/devices/me/attributes\",0\r\n")
+time.sleep(5)
 
 # Start send the GPS positions
 while True:
@@ -76,4 +74,6 @@ while True:
         module.sendCommand(f"AT+QMTPUB=1,0,0,0,\"gps_topic\",{len(gps_data)}\r\n")
         time.sleep(1)
         module.sendCommand(gps_data + "\r\n")
-        time.sleep(default_sleep_time)  # Wait for 10 seconds before sending the next coordinate
+        time.sleep(10)  # Wait for 10 seconds before sending the next coordinate
+        data = readline()
+        print(data)
