@@ -1,6 +1,10 @@
 import machine
 import time
 import BG77
+import ujson
+
+
+default_sleep_time = 10
 
 _REMOTE_SERVER_IP_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_ = 1883
@@ -53,6 +57,17 @@ cereg_response = module.sendCommand("AT+CEREG?\r\n")
 time.sleep(1)
 print("Extended Network Registration Status (CEREG):", cereg_response)
 
+def switch_callaback(topic,msg): # Callback function for the switch
+    js = ujson.loads(msg) # Parse the JSON message
+    if js['data'] == True:
+        default_sleep_time = 5 # Change the sleep time to 5 seconds
+    elif js['data'] == False:
+        default_sleep_time = 10         
+    
+# mount the callback function to the module
+module.setCallback(switch_callaback)
+
+
 # Start send the GPS positions
 while True:
     for item in coordinates:
@@ -61,4 +76,4 @@ while True:
         module.sendCommand(f"AT+QMTPUB=1,0,0,0,\"gps_topic\",{len(gps_data)}\r\n")
         time.sleep(1)
         module.sendCommand(gps_data + "\r\n")
-        time.sleep(10)  # Wait for 10 seconds before sending the next coordinate
+        time.sleep(default_sleep_time)  # Wait for 10 seconds before sending the next coordinate
