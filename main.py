@@ -11,6 +11,8 @@ _PASSWORD_ = ""
 _REMOTE_SERVER_IP_PROXY_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_PROXY_ = 7007
 
+_SENDING_INTERVAL_ = 10*1000       #30*60*1000  30 minutes in milliseconds
+
 coordinates = [
     (49.218319, 16.581795),
     (49.224934, 16.599390),
@@ -45,9 +47,15 @@ print("Network Registration Status (CEREG):", cereg_response)
 coordinates_num = len(coordinates)
 a = 0
 
+# Enable PSM mode
+module.sendCommand(f"AT+CPSMS=1,,,\"00000100\",\"00001111\"\r\n") # TAU = 40 min, Active time = 30 sec
+time.sleep(1)
+
 while True:
 # WAKE UP
-
+    module.sendCommand(f"WKUP\r\n") # Wake up module
+    time.sleep(1)
+    
     # Send message
     latitude, longitude = coordinates[a]
     gps_data = f"\"latitude\":{latitude},\"longitude\":{longitude}"
@@ -60,8 +68,27 @@ while True:
     
 # Check downlink message
     time.sleep(5)
+    # disregard the serial buffer content
+    bg_uart.read(bg_uart.in_waiting)
+    # read the downlink message
     module.sendCommand(f"AT+QIRD=1\r\n")
+    time.sleep(1)
+    if bg_uart.in_waiting > 0:
+        message = bg_uart.read(bg_uart.in_waiting)
+        message = message.decode("utf-8")
+        message.split(",")
+        # decide whether to change sending interval
+        if message[0] == "OK":         
+            if message[1] == "TRUE":
+                _SENDING_INTERVAL_ = 1*60*1000 # 1 minute in milliseconds
+            elif message[1] == "FALSE":
+                _SENDING_INTERVAL_ = 30*60*1000
+        else:
+            message = "Not a expected response."
+    else:
+        message = "Nothing received from the server."
+    print(message)
 
 # Sleep mode activation
-
-    time.sleep(10)
+    machine.lightsleep(_SENDING_INTERVAL_) 
+#    time.sleep(10)
