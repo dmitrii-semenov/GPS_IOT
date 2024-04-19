@@ -11,7 +11,7 @@ _PASSWORD_ = ""
 _REMOTE_SERVER_IP_PROXY_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_PROXY_ = 7007
 
-_SENDING_INTERVAL_ = 10*1000       #30*60*1000  30 minutes in milliseconds
+_SENDING_INTERVAL_ = 2*60000
 
 coordinates = [
     (49.218319, 16.581795),
@@ -32,30 +32,26 @@ time.sleep(3)
 module.setRadio(1)
 time.sleep(3)
 module.setAPN("lpwa.vodafone.iot")
-time.sleep(5)
+time.sleep(3)
 module.attachToNetwork()
-time.sleep(5)
+time.sleep(3)
 
 # Open socket
 module.sendCommand(f"AT+QIOPEN=1,1,\"UDP\",\"{_REMOTE_SERVER_IP_PROXY_}\",{_REMOTE_SERVER_PORT_PROXY_}\r\n")
-time.sleep(3)
+time.sleep(5)
 
 # Check network registration status using AT+CEREG?
 cereg_response = module.sendCommand("AT+CEREG?\r\n")
-time.sleep(1)
+time.sleep(3)
 print("Network Registration Status (CEREG):", cereg_response)
 coordinates_num = len(coordinates)
 a = 0
 
-# Enable PSM mode
-module.sendCommand(f"AT+CPSMS=1,,,\"00000100\",\"00001111\"\r\n") # TAU = 40 min, Active time = 30 sec
-time.sleep(1)
-
 while True:
-# WAKE UP
-    module.sendCommand(f"WKUP\r\n") # Wake up module
-    time.sleep(1)
-    
+    # WAKE UP
+    print("Wake up")
+    module.sendCommand(f"WKUP\r\n")
+
     # Send message
     latitude, longitude = coordinates[a]
     gps_data = f"\"latitude\":{latitude},\"longitude\":{longitude}"
@@ -66,29 +62,25 @@ while True:
     if a == coordinates_num:
         a = 0
     
-# Check downlink message
-    time.sleep(5)
-    # disregard the serial buffer content
-    bg_uart.read(bg_uart.in_waiting)
-    # read the downlink message
-    module.sendCommand(f"AT+QIRD=1\r\n")
+    # Check downlink message
+    time.sleep(2)
+    message = module.sendCommand(f"AT+QIRD=1\r\n")
     time.sleep(1)
-    if bg_uart.in_waiting > 0:
-        message = bg_uart.read(bg_uart.in_waiting)
-        message = message.decode("utf-8")
-        message.split(",")
-        # decide whether to change sending interval
-        if message[0] == "OK":         
-            if message[1] == "True":
-                _SENDING_INTERVAL_ = 1*60*1000 # 1 minute in milliseconds
-            elif message[1] == "False":
-                _SENDING_INTERVAL_ = 30*60*1000
+    splt_message = message.split(",")
+    if len(splt_message) == 3:         
+        if splt_message[2] == "True\r\n\r\nOK":
+            _SENDING_INTERVAL_ = 30000
+            message = "Switch set to 1"
+        elif splt_message[2] == "False\r\n\r\nOK":
+            _SENDING_INTERVAL_ = 2*60000
+            message = "Switch set to 0"
         else:
             message = "Not a expected response."
     else:
-        message = "Nothing received from the server."
+        message = "No Change"
     print(message)
-
-# Sleep mode activation
+    print("Go to sleep")
+    time.sleep(3)
+    
+    # Sleep mode activation
     machine.lightsleep(_SENDING_INTERVAL_) 
-#    time.sleep(10)
