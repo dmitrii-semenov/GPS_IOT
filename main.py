@@ -8,8 +8,8 @@ _CLIENT_ID_ = "ac24c3a0-f904-11ee-b0f6-299dee8b9dbf"
 _ACCESS_TOKEN_ = "052du7z8d2xagimrfdsh"
 _PASSWORD_ = ""
 
-_REMOTE_SERVER_IP_PROXY_ = ""
-_REMOTE_SERVER_PORT_PROXY_ = 7004
+_REMOTE_SERVER_IP_PROXY_ = "147.229.146.40"
+_REMOTE_SERVER_PORT_PROXY_ = 7007
 
 coordinates = [
     (49.218319, 16.581795),
@@ -28,31 +28,40 @@ time.sleep(3)
 
 # Set radio mode and APN configuration
 module.setRadio(1)
-time.sleep(1)
+time.sleep(3)
 module.setAPN("lpwa.vodafone.iot")
-time.sleep(1)
+time.sleep(5)
 module.attachToNetwork()
 time.sleep(5)
 
 # Open socket
 module.sendCommand(f"AT+QIOPEN=1,1,\"UDP\",\"{_REMOTE_SERVER_IP_PROXY_}\",{_REMOTE_SERVER_PORT_PROXY_}\r\n")
+time.sleep(3)
 
 # Check network registration status using AT+CEREG?
 cereg_response = module.sendCommand("AT+CEREG?\r\n")
 time.sleep(1)
 print("Network Registration Status (CEREG):", cereg_response)
+coordinates_num = len(coordinates)
+a = 0
 
 while True:
 # WAKE UP
 
     # Send message
-    latitude, longitude = coordinates[1]
-    gps_data = f"{{\"latitude\":{latitude},\"longitude\":{longitude}}}"
+    latitude, longitude = coordinates[a]
+    gps_data = f"\"latitude\":{latitude},\"longitude\":{longitude}"
     module.sendCommand(f"AT+QISEND=1,{len(gps_data)}\r\n")
     time.sleep(1)
     module.sendCommand(gps_data + "\r\n")
+    a = a + 1
+    if a == coordinates_num:
+        a = 0
+    
 # Check downlink message
+    time.sleep(5)
+    module.sendCommand(f"AT+QIRD=1\r\n")
 
 # Sleep mode activation
 
-    time.sleep(n)
+    time.sleep(10)
