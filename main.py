@@ -79,9 +79,9 @@ while True:
         message.split(",")
         # decide whether to change sending interval
         if message[0] == "OK":         
-            if message[1] == "TRUE":
+            if message[1] == "True":
                 _SENDING_INTERVAL_ = 1*60*1000 # 1 minute in milliseconds
-            elif message[1] == "FALSE":
+            elif message[1] == "False":
                 _SENDING_INTERVAL_ = 30*60*1000
         else:
             message = "Not a expected response."
