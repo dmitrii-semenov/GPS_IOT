@@ -11,13 +11,22 @@ _PASSWORD_ = ""
 _REMOTE_SERVER_IP_PROXY_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_PROXY_ = 7007
 
-_SENDING_INTERVAL_ = 2*60000
+_SENDING_INTERVAL_F_ = 10*60000 # in normal mode
+_SENDING_INTERVAL_T_ = 1*60000 # in fast tracking mode
 
 coordinates = [
-    (49.218319, 16.581795),
-    (49.224934, 16.599390),
-    (49.202283, 16.619560),
-    (49.204638, 16.571667),
+    (50.023859, 14.544091),
+    (49.961500, 14.619535),
+    (49.901836, 14.727313),
+    (49.828195, 14.854490),
+    (49.761405, 14.955801),
+    (49.686155, 15.100223),
+    (49.587039, 15.244645),
+    (49.447096, 15.583067),
+    (49.336258, 16.014177),
+    (49.247689, 16.320265),
+    (49.158960, 16.550909),
+    (49.216722, 16.611265),
 ]
 
 # Initialize UART for BG77 module
@@ -30,11 +39,11 @@ time.sleep(3)
 
 # Set radio mode and APN configuration
 module.setRadio(1)
-time.sleep(3)
+time.sleep(5)
 module.setAPN("lpwa.vodafone.iot")
-time.sleep(3)
-module.attachToNetwork()
-time.sleep(3)
+time.sleep(1)
+module.sendCommand("AT+COPS=1,2,23003\r\n")
+time.sleep(5)
 
 # Open socket
 module.sendCommand(f"AT+QIOPEN=1,1,\"UDP\",\"{_REMOTE_SERVER_IP_PROXY_}\",{_REMOTE_SERVER_PORT_PROXY_}\r\n")
@@ -42,45 +51,55 @@ time.sleep(5)
 
 # Check network registration status using AT+CEREG?
 cereg_response = module.sendCommand("AT+CEREG?\r\n")
-time.sleep(3)
+time.sleep(1)
 print("Network Registration Status (CEREG):", cereg_response)
 coordinates_num = len(coordinates)
 a = 0
+_SENDING_INTERVAL_ = _SENDING_INTERVAL_F_
 
 while True:
     # WAKE UP
     print("Wake up")
     module.sendCommand(f"WKUP\r\n")
-
+    time.sleep(1)
+    
+    # GPS location
+    #module.sendCommand(f"AT+QGPS=1\r\n")
+    #time.sleep(0.5)
+    #gps_data_meas = module.sendCommand(f"AT+QGPSLOC=2\r\n")
+    #time.sleep(0.5)
+    #print("GPS measured data:", gps_data_meas)
+    #module.sendCommand(f"AT+QGPS=0\r\n")
+    #time.sleep(0.5)
+    
     # Send message
     latitude, longitude = coordinates[a]
-    gps_data = f"\"latitude\":{latitude},\"longitude\":{longitude}"
-    module.sendCommand(f"AT+QISEND=1,{len(gps_data)}\r\n")
-    time.sleep(1)
-    module.sendCommand(gps_data + "\r\n")
+    gps_data_vector = f"\"latitude\":{latitude},\"longitude\":{longitude}"
+    module.sendCommand(f"AT+QISEND=1,{len(gps_data_vector)}\r\n")
+    time.sleep(2)
+    module.sendCommand(gps_data_vector + "\r\n")
     a = a + 1
     if a == coordinates_num:
         a = 0
     
     # Check downlink message
-    time.sleep(2)
     message = module.sendCommand(f"AT+QIRD=1\r\n")
-    time.sleep(1)
+    time.sleep(5)
     splt_message = message.split(",")
     if len(splt_message) == 3:         
         if splt_message[2] == "True\r\n\r\nOK":
-            _SENDING_INTERVAL_ = 30000
-            message = "Switch set to 1"
+            _SENDING_INTERVAL_ = _SENDING_INTERVAL_T_
+            message = "Switch set to ON position"
         elif splt_message[2] == "False\r\n\r\nOK":
-            _SENDING_INTERVAL_ = 2*60000
-            message = "Switch set to 0"
+            _SENDING_INTERVAL_ = _SENDING_INTERVAL_F_
+            message = "Switch set to OFF position"
         else:
             message = "Not a expected response."
     else:
         message = "No Change"
     print(message)
     print("Go to sleep")
-    time.sleep(3)
+    time.sleep(1)
     
     # Sleep mode activation
     machine.lightsleep(_SENDING_INTERVAL_) 
