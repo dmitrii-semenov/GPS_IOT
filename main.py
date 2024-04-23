@@ -2,17 +2,19 @@ import machine
 import time
 import BG77
 
+# ThingsBoard configuration
 _REMOTE_SERVER_IP_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_ = 1883
 _CLIENT_ID_ = "ac24c3a0-f904-11ee-b0f6-299dee8b9dbf"
 _ACCESS_TOKEN_ = "052du7z8d2xagimrfdsh"
 _PASSWORD_ = ""
 
+# PROXY configuration
 _REMOTE_SERVER_IP_PROXY_ = "147.229.146.40"
 _REMOTE_SERVER_PORT_PROXY_ = 7007
 
-_SENDING_INTERVAL_F_ = 10*60000 # in normal mode
-_SENDING_INTERVAL_T_ = 1*60000 # in fast tracking mode
+_SENDING_INTERVAL_F_ = 30*60 # in normal mode (30 minutes)
+_SENDING_INTERVAL_T_ = 60 # in fast-tracking mode (1 minute)
 
 coordinates = [
     (50.023859, 14.544091),
@@ -42,6 +44,8 @@ module.setRadio(1)
 time.sleep(5)
 module.setAPN("lpwa.vodafone.iot")
 time.sleep(1)
+
+# Connect to the network
 module.sendCommand("AT+COPS=1,2,23003\r\n")
 time.sleep(5)
 
@@ -51,8 +55,13 @@ time.sleep(5)
 
 # Check network registration status using AT+CEREG?
 cereg_response = module.sendCommand("AT+CEREG?\r\n")
-time.sleep(1)
+time.sleep(2)
 print("Network Registration Status (CEREG):", cereg_response)
+
+# Disable PSM (if set by default)
+module.sendCommand(f"AT+CPSMS=0\r\n")
+time.sleep(5)
+
 coordinates_num = len(coordinates)
 a = 0
 _SENDING_INTERVAL_ = _SENDING_INTERVAL_F_
@@ -60,8 +69,12 @@ _SENDING_INTERVAL_ = _SENDING_INTERVAL_F_
 while True:
     # WAKE UP
     print("Wake up")
-    module.sendCommand(f"WKUP\r\n")
-    time.sleep(1)
+    module.sendCommand("WKUP\r\n")
+    time.sleep(5)
+    
+    # Enable PSM mode
+    module.sendCommand(f"AT+CPSMS=1,,,\"00000100\",\"00001000\"\r\n") # TAU = 40 min, Active time = 16 sec
+    time.sleep(5)
     
     # GPS location
     #module.sendCommand(f"AT+QGPS=1\r\n")
@@ -86,11 +99,11 @@ while True:
     message = module.sendCommand(f"AT+QIRD=1\r\n")
     time.sleep(5)
     splt_message = message.split(",")
-    if len(splt_message) == 3:         
-        if splt_message[2] == "True\r\n\r\nOK":
+    if len(splt_message) == 2:         
+        if splt_message[1] == "True\r\n\r\nOK":
             _SENDING_INTERVAL_ = _SENDING_INTERVAL_T_
             message = "Switch set to ON position"
-        elif splt_message[2] == "False\r\n\r\nOK":
+        elif splt_message[1] == "False\r\n\r\nOK":
             _SENDING_INTERVAL_ = _SENDING_INTERVAL_F_
             message = "Switch set to OFF position"
         else:
@@ -101,5 +114,5 @@ while True:
     print("Go to sleep")
     time.sleep(1)
     
-    # Sleep mode activation
-    machine.lightsleep(_SENDING_INTERVAL_) 
+    # Wait
+    time.sleep(_SENDING_INTERVAL_)
