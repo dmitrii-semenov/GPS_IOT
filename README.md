@@ -30,7 +30,10 @@ coordinates = [(longitude, latitude)]
 message = "OK,True"  # Uplink was received and forwarded, quicker updates enabled
 message = "OK,False"  # Uplink was received and forwarded, quicker updates disabled
 ```
-
+## Theoretical battery live
+![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/b7cd45a4-c8a0-481e-b655-236af3c625cb)
+![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/ae1205d9-b47a-40e0-8ba7-127b8f5ee864)
 
 ## Used Solutions and Issues
 For data transmission, NB-IoT technology was chosen due to its coverage, low hardware cost and low power consumption. Also because of the nature of this project, the main disadvatanges as high latency, low amount of data transition and possible lags do not affect us in any significant way. However, as it's a paid solution, minimizing sent and received data was essential. Hence, UDP protocol was utilized for its fire-and-forget nature. To conserve power, the PSM (Power Saving Mode) was employed, as no data is expected during sleep periods. Although a sleep mode for the MCU was considered, issues with the RP2040 prompted its continuous operation. This issue could be solved by using a different MCU, such as the ESP32.  When it comes to battery power and a GPS module, neither of these components are included in the solution due to limitations of the development board used. Although the battery issue could potentially be resolved, the larger problem lies with the GPS module. The issue is from the BG77 module utilizing the serial port of the onboard MCU, and the capability to add another device is not implemented on the board. While both of these issues are fixable, they extend beyond the scope of this project.
+
