@@ -1,32 +1,35 @@
-# GPS_IOT## Authors: Dmitrii Semenenov, Radoslav Tomčala
+## Authors
+- Dmitrii Semenov
+- Radoslav Tomčala
 
-# Use case
-This GPS-tracker is a portable device that is supposed to be used by delivery services for easy package location monitoring and in case of emergency or theft, is able to switch from a standart update period of 30 minutes to a quick 1 minute refresh rate. Last known location is displayed on portal Thingsboard where you can monitor the delivery. Everything is battery powered to preserve portability.
+# Use Case
+The [GPS-tracker](https://github.com/dmitrii-semenov/GPS_IOT) is a portable device designed for use by delivery services to easily monitor package locations. In cases of emergency or theft, it can switch from a standard update period of 30 minutes to a quick 1-minute refresh rate. The last known location is displayed on the [Thingsboard](https://thingsboard.io/) portal, allowing monitoring of the delivery. The device operates on battery power to maintain portability.
+# Instructions
+After being connected to power, the device automatically configures itself and should begin sending coordinates to the desired server in about 20 seconds. Afterward, it enters power-saving mode until the waiting time expires and proceeds to send another message. When connected to the server, you have the ability to change the frequency of incoming data by flipping a switch on a dashboard. The device doesn't recognize this change immediately, but it must wait for another uplink to receive a confirmation message with the current switch status. If the state has changed, the device adapts to the desired mode of operation.
 
-## Instructions
-After connecting to power, the device automaticly configures itself and should begin sending coordinates to desired server in about 20 seconds. After that it goes into power saving mode until the waiting time expires and proceeds to send another message. When you connect to the server you have a ability to change the frequency of incoming data by flipping a switch on a dashboard. The device doesnt recognize this chagne immideatly but it must wait for another uplink in order to a confirmation message with a current switch status. If the state changed, the device adapts the desired mode of operation.
-
-
-
-
+##Showcase
+https://github.com/dmitrii-semenov/GPS_IOT/blob/main/demo.mov
 ## Hardware
-As a main controlling unit we use MCU unit. In this case Raspberry pico, that is connected to a BG77 module which provides NB-IoT capability. In the full version, the MCU would be connected to a battery pack and a GPS module would be added via serial port.
+The main controlling unit is the MCU (Microcontroller Unit), specifically [Raspberry Pico](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html), connected to a [BG77](https://www.quectel.com/wp-content/uploads/2021/03/Quectel_BG77_LPWA_Specification_V1.6.pdf) module providing NB-IoT capability. In the full version, the MCU would connect to a battery pack, and a GPS module would be added via a serial port.
 
 ![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/3832dd8c-1a9f-462c-a1c4-9f814cd84af3)
 
+## Data Transmission
+The NB-IoT module sends data according to the set interval to a proxy server using UDP communication protocol. This approach bypasses the requirement of [Thingsboard](https://thingsboard.io/) to use TCP-based MQTT and minimizes packet quantity. Upon receiving an uplink, the proxy sends a confirmation message that also includes the status of a fast monitoring switch.
 
-## Data transmission
-NB-IoT module sends the data according to the set up interval to a proxy server using a UDP communication protocol. This is done to overcome the requirment of Thingsboard to use TCP based MQTT and keep the amout of packets to minimum. After proxy recives an UPlNK, it sends a confirmation message that also includes the state of a fast monitoring switch.
 ![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/51cd049b-6daa-43c7-a06e-b2fb7b4205af)
 
-**GPS coordinates format**
-``` python
-coordinates = [(longitude,lattitude)]
+### GPS Coordinates Format
+```python
+coordinates = [(longitude, latitude)]
 ```
-**Message example** 
-``` python
-message = "OK,True" # Uplink was recived and fowarded , Quicker updates enabled
-message = "OK,False" # Uplink was recived and fowarded , Quicker updates disabled
+
+### Message Examples
+```python
+message = "OK,True"  # Uplink was received and forwarded, quicker updates enabled
+message = "OK,False"  # Uplink was received and forwarded, quicker updates disabled
 ```
-**Used solutions**
-For data transition we decided to use NB-IoT technology because it provides us with a option of more stable connection than other technologies. But because it is a paid solutions we had to keep the amount of send and recived data to minimum. That is why we had to use UDP protocol that works in a fire and forget way. 
+
+
+## Used Solutions and Issues
+For data transmission, NB-IoT technology was chosen due to its coverage, low hardware cost and low power consumption. Also because of the nature of this project, the main disadvatanges as high latency, low amount of data transition and possible lags do not affect us in any significant way. However, as it's a paid solution, minimizing sent and received data was essential. Hence, UDP protocol was utilized for its fire-and-forget nature. To conserve power, the PSM (Power Saving Mode) was employed, as no data is expected during sleep periods. Although a sleep mode for the MCU was considered, issues with the RP2040 prompted its continuous operation. This issue could be solved by using a different MCU, such as the ESP32.  When it comes to battery power and a GPS module, neither of these components are included in the solution due to limitations of the development board used. Although the battery issue could potentially be resolved, the larger problem lies with the GPS module. The issue is from the BG77 module utilizing the serial port of the onboard MCU, and the capability to add another device is not implemented on the board. While both of these issues are fixable, they extend beyond the scope of this project.
