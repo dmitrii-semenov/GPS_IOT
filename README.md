@@ -7,7 +7,7 @@ The [GPS-tracker](https://github.com/dmitrii-semenov/GPS_IOT) is a portable devi
 # Instructions
 After being connected to power, the device automatically configures itself and should begin sending coordinates to the desired server in about 20 seconds. Afterward, it enters power-saving mode until the waiting time expires and proceeds to send another message. When connected to the server, you have the ability to change the frequency of incoming data by flipping a switch on a dashboard. The device doesn't recognize this change immediately, but it must wait for another uplink to receive a confirmation message with the current switch status. If the state has changed, the device adapts to the desired mode of operation.
 
-##Showcase
+## Showcase
 ![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/980d3469-7b51-4cf0-ac19-71ac5d9c86a7)
 https://github.com/dmitrii-semenov/GPS_IOT/blob/main/demo.mov
 ## Hardware
