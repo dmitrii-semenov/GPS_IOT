@@ -24,7 +24,7 @@ The NB-IoT module sends data according to the set interval to a proxy server usi
 coordinates = [(longitude, latitude)]
 ```
 
-### Message Examples
+### Response Examples
 ```python
 message = "OK,True"  # Uplink was received and forwarded, quicker updates enabled
 message = "OK,False"  # Uplink was received and forwarded, quicker updates disabled
