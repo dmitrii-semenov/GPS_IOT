@@ -12,10 +12,13 @@ After connecting to power, the device automaticly configures itself and should b
 ## Hardware
 As a main controlling unit we use MCU unit. In this case Raspberry pico, that is connected to a BG77 module which provides NB-IoT capability. In the full version, the MCU would be connected to a battery pack and a GPS module would be added via serial port.
 
-![[IoT.drawio 1.png]]
+![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/3832dd8c-1a9f-462c-a1c4-9f814cd84af3)
+
+
 ## Data transmission
 NB-IoT module sends the data according to the set up interval to a proxy server using a UDP communication protocol. This is done to overcome the requirment of Thingsboard to use TCP based MQTT and keep the amout of packets to minimum. After proxy recives an UPlNK, it sends a confirmation message that also includes the state of a fast monitoring switch.
-![[IoT1.drawio.png]]
+![image](https://github.com/dmitrii-semenov/GPS_IOT/assets/124372068/51cd049b-6daa-43c7-a06e-b2fb7b4205af)
+
 **GPS coordinates format**
 ``` python
 coordinates = [(longitude,lattitude)]
