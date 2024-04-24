@@ -74,7 +74,7 @@ while True:
     
     # Enable PSM mode
     module.sendCommand(f"AT+CPSMS=1,,,\"00000100\",\"00001000\"\r\n") # TAU = 40 min, Active time = 16 sec
-    time.sleep(5)
+    time.sleep(1)
     
     # GPS location
     #module.sendCommand(f"AT+QGPS=1\r\n")
@@ -97,7 +97,7 @@ while True:
     
     # Check downlink message
     message = module.sendCommand(f"AT+QIRD=1\r\n")
-    time.sleep(5)
+    time.sleep(3)
     splt_message = message.split(",")
     if len(splt_message) == 2:         
         if splt_message[1] == "True\r\n\r\nOK":
